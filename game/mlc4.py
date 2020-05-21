@@ -8,9 +8,21 @@ from keras.models import load_model, save_model
 
 import numpy as np
 import os
+import sys
+import contextlib
 import time
+from tqdm import tqdm
 import colorama
 colorama.init()
+
+
+class HidePrintingContext:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = None
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self._original_stdout
 
 
 class MLC4:
@@ -51,6 +63,7 @@ class MLC4:
 
     def reset(self):
         self.game = Game()
+        self.states = []
 
     def play_original(self, starting=None, legal_only=True, n=100):
         # Dummy call original play function
@@ -62,14 +75,15 @@ class MLC4:
               + f" {self.print_player(1)} plays randomly.")
         self._add_state(self.game, None, None)
 
-    def play_vs_random(self, starting=None, legal_only=True):
+    def play_vs_random(self, starting=None, legal_only=True, check_early_win=True, prevent_other_win=True):
         # Against random player
         player = starting if starting is not None else starting_player()
         self._start_game(player)
 
         while self.game.status is None:
             if player < 0 and self.model:
-                move = self.predict()
+                move = self.predict(check_early_win=check_early_win,
+                                    prevent_other_win=prevent_other_win)
             else:
                 move = self.game.random_action(legal_only=legal_only)
 
@@ -81,14 +95,15 @@ class MLC4:
         print(f"{self.print_player_string(self.game.status)} wins!")
         return self.game.status
 
-    def play_vs_smart(self, starting=None, legal_only=True, n=100):
+    def play_vs_smart(self, starting=None, legal_only=True, n=100, check_early_win=True, prevent_other_win=True):
         # Against smart player
         player = starting if starting is not None else starting_player()
         self._start_game(player)
 
         while self.game.status is None:
             if player < 0 and self.model:
-                move = self.predict()
+                move = self.predict(check_early_win=check_early_win,
+                                    prevent_other_win=prevent_other_win)
             else:
                 move, p = self.game.smart_action(player, legal_only=legal_only, n=n)
                 if not self.game.is_legal_move(move):
@@ -107,13 +122,13 @@ class MLC4:
 
     def load_existing_model(self, name, basepath="../data/models/"):
         try:
-            self.model = load_model(f"{basepath}{name}", compile=False)
+            self.model = load_model(f"{basepath}{name}", compile=True)
             self.model.predict(np.zeros((1, self.board_nodes + 1)))  # Init predictor
         except Exception as e:
             self.model = None
             print(f"Could not load model!\n{e}")
         else:
-            print(self.model.summary())
+            self.model.summary()
 
     def build_network(self):
         """
@@ -134,14 +149,17 @@ class MLC4:
         self.model.add(Dense(self.board_nodes + 1, input_dim=self.board_nodes + 1))
 
         # Normalise layer
-        self.model.add(BatchNormalization())
+        # self.model.add(BatchNormalization())
 
         # One or more large layers
         self.model.add(Dense(64, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
         # self.model.add(Dense(64, activation='relu'))
 
         # Smaller ending layer
         self.model.add(Dense(self.board_nodes, activation='relu'))
+        # self.model.add(Dense(self.game.width, activation='relu'))
 
         # Output end layer
         self.model.add(Dense(2, activation='softmax'))
@@ -150,7 +168,7 @@ class MLC4:
                            optimizer='nadam',  # Or rmsprop?
                            metrics=['accuracy'])
 
-        print(self.model.summary())
+        self.model.summary()
 
     def prepare_data(self, input_file, train_ratio=0.8):
         print("Preparing data...")
@@ -251,6 +269,23 @@ class MLC4:
 
         return ai_move[0]
 
+
+
+def test_accuracy(game, strategy, total=100, **kw):
+    win_count, total_games = 0, total
+
+    with HidePrintingContext():
+        # Don't print while testing
+
+        for _ in tqdm(range(total_games), ncols=79, desc="Simulating games...", ):
+            result = strategy(**kw)
+            game.reset()
+            if result == -1:
+                win_count +=1
+
+    return win_count / total_games
+
+
 if __name__ == "__main__":
     game = MLC4()
 
@@ -263,22 +298,45 @@ if __name__ == "__main__":
 
     if train_new:
         # Build. train and save new model
-        train_data, test_data = game.prepare_data(data_input)
+        train_data, test_data = game.prepare_data(data_input, train_ratio=0.8)
         game.build_network()
-        game.train(train_data, test_data)
+        game.train(train_data, test_data, epochs=10, batch_size=200)
         game.save_model(trained_name)
     else:
         # Or load pre-trained
         game.load_existing_model(trained_name)
 
+
+    input("Model ready. Press enter to start game.")
+    check_early_win   = True
+    prevent_other_win = True
+
+
+    # # Test games
+    # while True:
+    #     total = 100
+    #     try:
+    #         rnd_acc = test_accuracy(game, game.play_vs_random, total, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+    #         print(f"Accuracy vs random: {rnd_acc * 100:.2f}%")
+
+    #         smt_acc = test_accuracy(game, game.play_vs_smart , total, n=3, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+    #         print(f"Accuracy vs smart : {smt_acc * 100:.2f}%")
+
+    #         input()
+    #     except KeyboardInterrupt:
+    #         break
+
+
+    # # Play and display games
     while True:
-        # game.play_vs_random()
-        game.play_vs_smart()
+        game.play_vs_random(check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+        # game.play_vs_smart(n=5, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
 
         print()
-        game.print_states()
+        # game.print_states()
 
-        if input("Type 'q' to exit, else play new game: ").lower() in ("q", "quit", "exit"):
+        ask = input(f"{colorama.Fore.GREEN}Enter 'q' to exit, else play new game:{colorama.Style.RESET_ALL} ")
+        if ask.lower() in ("q", "quit", "exit"):
             break
 
         game.reset()
