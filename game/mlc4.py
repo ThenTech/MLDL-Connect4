@@ -7,6 +7,7 @@ from keras.layers import Dense, BatchNormalization
 from keras.models import load_model, save_model
 
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 import sys
 import contextlib
@@ -187,23 +188,40 @@ class MLC4:
         print("Data loaded.")
         return (X_train, Y_train), (X_test, Y_test)
 
-    def train(self, train_data, test_data, epochs=10, batch_size=200):
+    def train(self, train_data, test_data, epochs=10, batch_size=200, show_plot=False, save_plot_path=""):
         print("Training model...")
 
         train_x, train_y = train_data
 
-        self.model.fit(train_x, train_y,
-                       validation_data=test_data,
-                       shuffle=True,
-                       epochs=epochs,
-                       batch_size=batch_size)
+        hist = self.model.fit(train_x, train_y,
+                              validation_data=test_data,
+                              shuffle=True,
+                              epochs=epochs,
+                              batch_size=batch_size)
+
+        if show_plot or save_plot_path:
+            plt.style.use("ggplot")
+            plt.figure()
+            plt.plot(np.arange(0, epochs), [1.0] * epochs, "r--", label="Accuracy target", )
+            plt.plot(np.arange(0, epochs), hist.history["loss"], "cyan", label="train_loss")
+            plt.plot(np.arange(0, epochs), hist.history["val_loss"], "blue", label="val_loss")
+            plt.plot(np.arange(0, epochs), hist.history["accuracy"], "yellow", label="train_acc")
+            plt.plot(np.arange(0, epochs), hist.history["val_accuracy"], "orange", label="val_acc")
+            plt.title("Training Loss and Accuracy")
+            plt.xlabel("Epoch #")
+            plt.ylabel("Loss/Accuracy")
+            plt.legend(loc="upper left")
+            plt.xlim(0, epochs - 1)
+            plt.ylim(bottom=0)
+            if save_plot_path: plt.savefig(save_plot_path)
+            if show_plot: plt.show()
 
         self.model.predict(np.zeros((1, self.board_nodes + 1)))  # Init predictor
 
     def save_model(self, name="trained_1", basepath="../data/models/", save_structure=False):
         # if not name.endswith(".h5"):
         #     name += ".h5"
-        print(f"Saving model to: {basepath}{name}...")
+        print(f"Saving model to: '{basepath}{name}'...")
 
         if not os.path.exists(basepath):
             os.makedirs(basepath)
@@ -300,7 +318,8 @@ if __name__ == "__main__":
         # Build. train and save new model
         train_data, test_data = game.prepare_data(data_input, train_ratio=0.8)
         game.build_network()
-        game.train(train_data, test_data, epochs=10, batch_size=200)
+        game.train(train_data, test_data, epochs=10, batch_size=200,
+                   show_plot=True, save_plot_path=f"../data/models/{trained_name}.png")
         game.save_model(trained_name)
     else:
         # Or load pre-trained

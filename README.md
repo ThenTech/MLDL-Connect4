@@ -26,12 +26,12 @@ Accuracies in tables below are from averages of 1000 simulated games, with playe
 
 | Source training | Fitted accuracy | Test vs random | Test vs smart (n=3) |  (n=5)  | (n=100) |
 | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-| 10k | 80.76% |   |   |   |   |
-| 50k | 74.06% | 95-99% | ~83-88% | ~76-80% | ~6% |
+| 10k | 60.51% |   |   |   |   |
+| 50k | 63.10% | 95-99% | ~83-88% | ~76-80% | ~6% |
 (**with** `check_early_win` and **without** `prevent_other_win`)
 
 | Source training | Fitted accuracy | Test vs random | Test vs smart (n=3) |  (n=5)  | (n=100) |
 | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-| 10k | 80.76% |   |   |   |   |
-| 50k | 74.06% | 98-100% | ~89-97% | ~84-92% | ~10% |
+| 10k | 60.51% |   |   |   |   |
+| 50k | 63.10% | 98-100% | ~89-97% | ~84-92% | ~10% |
 (**with** `check_early_win` and **with** `prevent_other_win`)
