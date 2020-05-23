@@ -1,0 +1,41 @@
+Model: "trained_50k-norm"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #
+=================================================================
+dense_1 (Dense)              (None, 42)                1806
+_________________________________________________________________
+dense_2 (Dense)              (None, 64)                2752
+_________________________________________________________________
+dense_3 (Dense)              (None, 256)               16640
+_________________________________________________________________
+dense_4 (Dense)              (None, 256)               65792
+_________________________________________________________________
+dense_5 (Dense)              (None, 42)                10794
+_________________________________________________________________
+dense_6 (Dense)              (None, 3)                 129
+=================================================================
+Total params: 97,913
+Trainable params: 97,913
+Non-trainable params: 0
+_________________________________________________________________
+Using options: check_early_win, not prevent_other_win
+Model ready. Press enter to start tests.
+Simulating games...: 100%|█████████████████| 1000/1000 [00:47<00:00, 20.91it/s]
+Accuracy vs random (x1000)     : 28.10% wins, 0.00% draws, 71.90% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [03:23<00:00,  4.92it/s]
+Accuracy vs smart (x1000, n=3) : 5.30% wins, 0.00% draws, 94.70% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [04:51<00:00,  3.43it/s]
+Accuracy vs smart (x1000, n=5) : 2.70% wins, 0.00% draws, 97.30% losses.
+Simulating games...: 100%|███████████████████| 100/100 [06:28<00:00,  3.88s/it]
+Accuracy vs smart (x100, n=100): 0.00% wins, 0.00% draws, 100.00% losses.
+____________________________
+Using options: check_early_win, prevent_other_win
+Model ready. Press enter to start tests.
+Simulating games...: 100%|█████████████████| 1000/1000 [01:24<00:00, 11.81it/s]
+Accuracy vs random (x1000)     : 95.40% wins, 0.40% draws, 4.20% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [04:42<00:00,  3.55it/s]
+Accuracy vs smart (x1000, n=3) : 79.30% wins, 0.00% draws, 20.70% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [07:27<00:00,  2.24it/s]
+Accuracy vs smart (x1000, n=5) : 66.10% wins, 0.10% draws, 33.80% losses.
+Simulating games...: 100%|███████████████████| 100/100 [13:19<00:00,  8.00s/it]
+Accuracy vs smart (x100, n=100): 8.00% wins, 0.00% draws, 92.00% losses.
