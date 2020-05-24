@@ -18,6 +18,17 @@ Total params: 97,913
 Trainable params: 97,913
 Non-trainable params: 0
 _________________________________________________________________
+Using options: check_early_win, not prevent_other_win
+Model ready. Press enter to start tests.
+Simulating games...: 100%|█████████████████| 1000/1000 [00:50<00:00, 19.82it/s]
+Accuracy vs random (x1000)     : 34.90% wins, 0.00% draws, 65.10% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [03:37<00:00,  4.60it/s]
+Accuracy vs smart (x1000, n=3) : 7.50% wins, 0.00% draws, 92.50% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [05:06<00:00,  3.26it/s]
+Accuracy vs smart (x1000, n=5) : 2.50% wins, 0.00% draws, 97.50% losses.
+Simulating games...: 100%|███████████████████| 100/100 [06:41<00:00,  4.02s/it]
+Accuracy vs smart (x100, n=100): 0.00% wins, 0.00% draws, 100.00% losses.
+_________________________________________________________________
 Using options: check_early_win, prevent_other_win
 Model ready. Press enter to start tests.
 Simulating games...: 100%|█████████████████| 1000/1000 [01:35<00:00, 10.45it/s]

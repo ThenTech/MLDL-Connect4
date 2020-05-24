@@ -40,8 +40,8 @@ The results:
 
 | Source training | Fitted accuracy | Test vs random | vs smart (n=3) |  (n=5)  | (n=100) |
 | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-| 10k | 81.00/59.51% | *97.70%* | *73.50%* | *63.00%* | *10.00%* |
-| 10k-norm | 75.74/62.09% | *41.65%* | *11.35%* | *5.90%* | *0.00%* |
+| 10k | 81.00/59.51% | 96.60% | 79.20% | 67.90% |  4.00%  |
+| 10k-norm | 75.74/62.09% | 34.90% |     7.50%      | 2.50%  | 0.00% |
 | 50k |  74.98/62.66%   | 98.60% | 88.00% | 82.00% | 13.00% |
 | 50k-norm | 71.48/64.51% | 28.10% | 5.30% | 2.70% | 0.00% |
 (**with** `check_early_win` and **without** `prevent_other_win`)
@@ -56,12 +56,16 @@ The results:
 
 ### New data generation
 
-We used the above model to generate some novel data, by letting the AI play itself. Playing 10000 games (sequentially) against itself, there was a 50.78% win ratio for player `-1`, so the games seem balanced. This training took 53 minutes and 28 seconds (on GPU).
+We used the above model to generate some novel data, by letting the created AI play against the smart player `n=10`. We used the model trained against the 50k dataset, since this had the best performance. Playing games with a `ProcessPoolExecutor` and using only the CPU to run the pre-trained model showed to be the fastest. Simulating these games took 31 minutes and 18 seconds for 10k and 2 hours 41 minutes for 50k games. Additionally, we merged the given 50k dataset with the newly generated one, creating a merged 100k dataset.
 
-A new model was trained using this dataset. The results are shown below.
+New models were trained using these datasets. The results using the random seed mentioned before, are shown below.
 
 | Source training | Fitted accuracy | Test vs random | vs smart (n=3) |  (n=5)  | (n=100) |
 | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-| 10k AI vs AI |  |  |  |       |   |
+| 10k AI vs smart | 85.69/72.53% | 97.50% | 87.50% | 76.90% | 9.00% |
+| 50k AI vs smart | 82.64/74.68% | 98.20% | 88.70% | 84.40% | 15.00% |
+| 100k merged | 75.92/73.90% | 99.70% | 97.30% | 93.10% | 22.00% |
 
-To use MPI on Windows, install [Microsoft MPI](https://www.microsoft.com/en-us/download/details.aspx?id=100593).
+(**with** `check_early_win` and **with** `prevent_other_win`)
+
+We can see the accuracy against its own training and test data is much higher than those from before, but the new 10k and 50k models do not perform any better than the previous ones. The 100k model does perform marginally better however. This is likely due to the fact that double the amount of data was used to train it.

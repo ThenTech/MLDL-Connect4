@@ -23,4 +23,4 @@ def read_games(fname):
         yield as_board(game)
 
 X = np.vstack([np.hstack(game) for game in read_games(sys.argv[1])])
-np.save('c4.npy', X)
+np.save('c4.npy', X.astype(int))

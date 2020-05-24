@@ -4,8 +4,7 @@ from colours import Colours, style
 import sys
 from io import StringIO
 from tqdm import tqdm
-from mpi4py.futures import MPIPoolExecutor, MPICommExecutor
-
+import concurrent.futures
 
 class HidePrintingContext:
     def __enter__(self):
@@ -35,29 +34,38 @@ def test_accuracy(game, strategy, total=100, **kw):
     return tuple(map(lambda x: x / total, counts.values()))
 
 
-def generate_dataset(game, output_file_name, total=100, mode="w", **kw):
-    shared_model = game.model
+def _setup_and_play_mp(arg_tup):
+    game_id, klass, model, kw = arg_tup
+    new_game = klass()
+    new_game.model = model
 
+    with HidePrintingContext():
+        new_game.play_vs_smart(**kw)
+
+    io = StringIO()
+    new_game.print_states(game_id, io)
+    return io.getvalue()
+
+def generate_dataset(game, output_file_name, total=100, mode="w", **kw):
     if output_file_name:
         output_file = open(output_file_name, mode)
     else:
         print(style("No output file?", Colours.FG.BRIGHT_RED))
         return
 
-    def setup_and_play(game_id):
-        new_game = game.__class__()
-        new_game.model = shared_model
-        new_game.play_vs_smart(**kw)
-
-        io = StringIO()
-        new_game.print_states(game_id, io)
-        return io.getvalue()
-
     with HidePrintingContext():
-        with MPICommExecutor() as pool:
-            for result in tqdm(pool.map(setup_and_play, range(total), unordered=True),
-                               ncols=79, desc="Generating data... ", total=total):
+        # Concurrently (for total=100, takes around 36 seconds)
+        with concurrent.futures.ProcessPoolExecutor(max_workers=8) as pool:
+            for result in tqdm(pool.map(_setup_and_play_mp,
+                                        ((gid, game.__class__, game.model, kw) for gid in range(total)),
+                                        chunksize=50),
+                               ncols=79, desc="Generating data... ", total=total,):
                 print(result, file=output_file)
+
+        # Sequentially (for total=100, takes around 1 minute)
+        # for gid in tqdm(range(total), ncols=79, desc="Generating data... ", total=total):
+        #     result = setup_and_play(gid)
+        #     print(result, file=output_file)
 
     if output_file_name:
         print(style("Data saved to: '", Colours.FG.GREEN) + style(output_file_name, Colours.FG.BRIGHT_GREEN) + "'")
@@ -79,9 +87,8 @@ if __name__ == "__main__":
     game = MLC4()
     # game = MLC4Normalised()
 
-    # data_input = "../data/c4-10k.npy"
-    data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-10k.npy"
-    trained_name = "trained_10k"
+    # data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-10k.npy"
+    # trained_name = "trained_10k"
     # trained_name = "trained_10k-norm"
 
     # data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-50k.npy"
@@ -90,6 +97,13 @@ if __name__ == "__main__":
 
     # data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-ai-vs-smart-10k.npy"
     # trained_name = "c4-ai-vs-smart-10k"
+
+    # data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-ai-vs-smart-50k.npy"
+    # trained_name = "c4-ai-vs-smart-50k"
+
+    data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-merge-100k.npy"
+    trained_name = "c4-merge-100k"
+
 
     train_new = False
 
@@ -106,7 +120,7 @@ if __name__ == "__main__":
 
 
     check_early_win   = True
-    prevent_other_win = False
+    prevent_other_win = True
 
     if any((check_early_win, prevent_other_win)):
         print(style("Using options: ", Colours.FG.MAGENTA) \
@@ -119,12 +133,19 @@ if __name__ == "__main__":
     # Test games
     output_file = ""
     # output_file = "../data/c4-ai-vs-smart-10k.csv"
+    # output_file = "../data/c4-ai-vs-smart-50k.csv"
 
     if output_file:
         # Create new dataset
+
+        # When using this, also uncomment in mlc4.py:
+        #     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        # This way the CPU is used to run the network, enabling multiprocessing.
+
         generate_dataset(game, output_file,
-                         total=10000,
+                         total=50000, mode="w",
                          n=10, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+        exit(0)
     else:
         # Test procedure to get accuracies by simulating games
         try:

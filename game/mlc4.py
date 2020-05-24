@@ -11,7 +11,10 @@ if seed: np.random.seed(seed)
 
 from connectfour import Game, starting_player
 
+import os, sys
+
 import tensorflow as tf
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Force CPU
 if seed: tf.random.set_seed(seed)
 
 import keras
@@ -21,8 +24,6 @@ from keras.losses import SparseCategoricalCrossentropy
 from keras.optimizers import Nadam
 
 import matplotlib.pyplot as plt
-import os, sys
-
 
 
 class MLC4:
@@ -74,8 +75,8 @@ class MLC4:
 
     def _start_game(self, player, other_strat_descr="plays randomly"):
         print("-" * 80 + f"\n\nStarting game with {self.print_player_string(player)}. " \
-              + f"AI player is {self.print_player_string(-1)}." \
-              + f" {self.print_player(1)} {other_strat_descr}.")
+            + f"AI player is {self.print_player_string(-1)}." \
+            + f" {self.print_player(1)} {other_strat_descr}.")
         self._add_state(self.game, None, None)
 
     def play_vs_random(self, starting=None, legal_only=True, check_early_win=True, prevent_other_win=True):
@@ -231,7 +232,7 @@ class MLC4:
         print(style("Average accuracy while training: ", Colours.FG.MAGENTA) \
             + style(f"{np.average(np.array(hist.history['val_accuracy'])) * 100:.2f}%", Colours.FG.BRIGHT_MAGENTA))
         print(style("Average accuracy on test set   : ", Colours.FG.MAGENTA) \
-            + style(f"{test_acc * 100:.2f}% (score={test_score})", Colours.FG.BRIGHT_MAGENTA))
+            + style(f"{test_acc * 100:.2f}% (score={test_score:.4f})", Colours.FG.BRIGHT_MAGENTA))
 
         if show_plot or save_plot_path:
             plt.style.use("ggplot")
