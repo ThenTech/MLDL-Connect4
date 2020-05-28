@@ -385,3 +385,64 @@ class MLC4Normalised(MLC4):
 
         print(f"  => Predicted move at col {max_probability[0]} with {max_probability[1] * 100:.3f}%")
         return max_probability
+
+
+class MLC4NormalisedConv(MLC4):
+    def __init__(self, board=None):
+        super().__init__(board=board)
+        self.input_size = self.board_nodes
+
+    def prepare_data(self, input_file, train_ratio=0.8):
+        print("Preparing data...")
+
+        data = np.load(input_file)
+
+        player = data[:, -1:]
+
+        # Multiply winner and board with player to normalise player to player 1
+        Y = data[:, -2:-1] * player   # (winner), add 1 to make them positive
+        X = data[:, :-2] * player     # Drop last 2 cols, normalise and make positive, result = (board state)
+
+        size = int(train_ratio * X.shape[0])
+
+        X_train, X_test, Y_train, Y_test = X[:size], X[size:], Y[:size], Y[size:]
+
+        print("Data loaded.")
+        return (X_train, Y_train), (X_test, Y_test)
+
+
+    def _predict_move_probability(self, player, check_early_win=True):
+        # Predict chance of winning for each move
+        # and return column with highest chance.
+        max_probability = (0, 0.0)
+
+        print(self.print_player_string(player) + ": Testing cols: |", end="")
+
+        for i, move in enumerate(range(self.game.width)):
+            if not self.game.is_legal_move(move):
+                print(style(f" {0.0:.2f} |", Colours.FG.BRIGHT_RED), end="")
+                continue
+
+            test_game = Game(board=self.game.board.copy())
+            test_game.play_move(player, move)
+
+            if check_early_win and test_game.status == player:
+                # Win reached
+                print(" win", end="")
+                max_probability = (i, 1.0)
+                break
+
+            # Get prediction for move
+            test_input = test_game.board.flatten().reshape((1, self.input_size)) * player + 1
+            prediction = self.model.predict(test_input)[0][player + 1]  # [[player_0_prob, draw (?), player_1_prob]]
+
+            if np.isnan(prediction):
+                raise Exception("Error: prediction is NaN?")
+
+            print(f" {prediction:.3f} |", end="")
+
+            if prediction > max_probability[1]:
+                max_probability = (i, prediction)
+
+        print(f"  => Predicted move at col {max_probability[0]} with {max_probability[1] * 100:.3f}%")
+        return max_probability
