@@ -1,4 +1,4 @@
-from mlc4 import MLC4, MLC4Normalised
+from mlc4 import MLC4, MLC4Normalised, MLC4NormalisedConv, MLC4Simplified
 from colours import Colours, style
 
 import sys
@@ -84,8 +84,10 @@ def print_accuracy(descr, win=0, draw=0, loss=0, result=None):
 
 if __name__ == "__main__":
     # Create one of these two networks.
-    game = MLC4()
+    # game = MLC4()
     # game = MLC4Normalised()
+    # game = MLC4NormalisedConv()
+    game = MLC4Simplified()
 
     # data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-10k.npy"
     # trained_name = "trained_10k"
@@ -102,7 +104,8 @@ if __name__ == "__main__":
     # trained_name = "c4-ai-vs-smart-50k"
 
     data_input   = "G:\\_temp\\UHasselt\\MLDL\\c4-merge-100k.npy"
-    trained_name = "c4-merge-100k"
+    # trained_name = "c4-merge-100k"
+    trained_name = "trained_100k-simple"
 
 
     train_new = False
@@ -118,6 +121,10 @@ if __name__ == "__main__":
         # Or load pre-trained
         game.load_existing_model(trained_name)
 
+    if not game.has_model():
+        print(style("No model ready! Exiting...", Colours.FG.BRIGHT_RED))
+        exit(1)
+
 
     check_early_win   = True
     prevent_other_win = True
@@ -127,55 +134,59 @@ if __name__ == "__main__":
             + style("check_early_win", Colours.FG.BRIGHT_GREEN if check_early_win else Colours.FG.BRIGHT_BLACK) + ", "\
             + style("prevent_other_win", Colours.FG.BRIGHT_GREEN if prevent_other_win else Colours.FG.BRIGHT_BLACK))
 
-    input(style("Model ready. Press enter to start tests.", Colours.FG.MAGENTA))
+    input(style("Model ready. Press enter to start tests or play.", Colours.FG.MAGENTA))
 
 
     # Test games
+    run_test_or_generate = False
+    run_play_and_display = True
+
     output_file = ""
     # output_file = "../data/c4-ai-vs-smart-10k.csv"
     # output_file = "../data/c4-ai-vs-smart-50k.csv"
 
-    if output_file:
-        # Create new dataset
+    if run_test_or_generate:
+        if output_file:
+            # Create new dataset
 
-        # When using this, also uncomment in mlc4.py:
-        #     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-        # This way the CPU is used to run the network, enabling multiprocessing.
+            # When using this, also uncomment in mlc4.py:
+            #     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+            # This way the CPU is used to run the network, enabling multiprocessing.
 
-        generate_dataset(game, output_file,
-                         total=50000, mode="w",
-                         n=10, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
-        exit(0)
-    else:
-        # Test procedure to get accuracies by simulating games
-        try:
-            result = test_accuracy(game, game.play_vs_random, 1000,
-                                   check_early_win=check_early_win, prevent_other_win=prevent_other_win)
-            print_accuracy("Accuracy vs random (x1000)     ", result=result)
+            generate_dataset(game, output_file,
+                            total=50000, mode="w",
+                            n=10, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+            exit(0)
+        else:
+            # Test procedure to get accuracies by simulating games
+            try:
+                result = test_accuracy(game, game.play_vs_random, 1000,
+                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                print_accuracy("Accuracy vs random (x1000)     ", result=result)
 
-            result = test_accuracy(game, game.play_vs_smart, 1000, n=3,
-                                   check_early_win=check_early_win, prevent_other_win=prevent_other_win)
-            print_accuracy("Accuracy vs smart (x1000, n=3) ", result=result)
+                result = test_accuracy(game, game.play_vs_smart, 1000, n=3,
+                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                print_accuracy("Accuracy vs smart (x1000, n=3) ", result=result)
 
-            result = test_accuracy(game, game.play_vs_smart, 1000, n=5,
-                                   check_early_win=check_early_win, prevent_other_win=prevent_other_win)
-            print_accuracy("Accuracy vs smart (x1000, n=5) ", result=result)
+                result = test_accuracy(game, game.play_vs_smart, 1000, n=5,
+                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                print_accuracy("Accuracy vs smart (x1000, n=5) ", result=result)
 
-            result = test_accuracy(game, game.play_vs_smart, 100, n=100,
-                                   check_early_win=check_early_win, prevent_other_win=prevent_other_win)
-            print_accuracy("Accuracy vs smart (x100, n=100)", result=result)
+                result = test_accuracy(game, game.play_vs_smart, 100, n=100,
+                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                print_accuracy("Accuracy vs smart (x100, n=100)", result=result)
 
-            # result = test_accuracy(game, game.play_vs_ai, 1000,
-            #                        check_early_win=check_early_win, prevent_other_win=prevent_other_win,
-            #                        random_move_chance=0.3)
-            # print_accuracy("Accuracy vs AI (x1000, rnd=.3) ", result=result)
-        except KeyboardInterrupt:
-            pass
+                # result = test_accuracy(game, game.play_vs_ai, 1000,
+                #                        check_early_win=check_early_win, prevent_other_win=prevent_other_win,
+                #                        random_move_chance=0.3)
+                # print_accuracy("Accuracy vs AI (x1000, rnd=.3) ", result=result)
+            except KeyboardInterrupt:
+                pass
 
-    input(style("Done. Press enter to play and display games.", Colours.FG.MAGENTA))
+        input(style("Done. Press enter to play and display games.", Colours.FG.MAGENTA))
 
     # Play and display games
-    while True:
+    while run_play_and_display:
         try:
             # game.play_vs_random(check_early_win=check_early_win, prevent_other_win=prevent_other_win)
             game.play_vs_smart(n=100, check_early_win=check_early_win, prevent_other_win=prevent_other_win)

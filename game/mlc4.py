@@ -1,7 +1,7 @@
 from colours import Colours, style
 
-seed = 1232611  # Student number Cedric
-# seed = 0
+# seed = 1232611  # Student number Cedric
+seed = 0
 
 import random
 if seed: random.seed(seed)
@@ -27,14 +27,23 @@ import matplotlib.pyplot as plt
 
 
 class MLC4:
-    def __init__(self, board=None):
+    def __init__(self, board=None, print_friendly=False):
         super().__init__()
         self.game = Game(board=board)  # Cannot do inheritance due to deepcopy in Game...
         self.states = []
 
         self.model = None
         self.board_nodes = self.game.width * self.game.height
-        self.input_size  = self.board_nodes + 1
+        self.input_shape  = (self.board_nodes + 1,)
+
+        # If True, use another character for the other player so they are distinct
+        # when printing without colours, e.g. ■ ▀ • ⦿
+        self.print_friendly = print_friendly
+        self.__players = {
+            -1: style("■", Colours.FG.YELLOW),
+             0: " ",
+             1: style("•" if self.print_friendly else "■", Colours.FG.RED)
+        }
 
     def __str__(self):
         top_row = "┌" + ("─" * 3 + "┬") * (self.game.width-1) + "─" * 3 + "┐"
@@ -57,8 +66,7 @@ class MLC4:
             print(game_id, idx, move[0], move[1], self.game.status, sep=",", file=fp or sys.stdout)
 
     def print_player(self, p):
-        return style("▀", Colours.FG.YELLOW if p < 0 else Colours.FG.RED) \
-            if p != 0 else " "
+        return self.__players.get(p, self.__players[0])
 
     def print_player_string(self, p):
         if p == 0:
@@ -111,7 +119,7 @@ class MLC4:
             else:
                 move, p = self.game.smart_action(player, legal_only=legal_only, n=n)
                 if not self.game.is_legal_move(move):
-                    print("Illegal move from smart player! ", player, p, move)
+                    print(style("Illegal move smart player! ", Colours.FG.BRIGHT_RED), player, move)
 
             print(f"{self.print_player_string(player)} adds to column {move}...")
             self.game.play_move(player, move)
@@ -135,7 +143,7 @@ class MLC4:
                                     prevent_other_win=prevent_other_win)
 
             if not self.game.is_legal_move(move):
-                print("Illegal move from player! ", player, move)
+                print(style("Illegal move from player! ", Colours.FG.BRIGHT_RED), player, move)
 
             print(f"{self.print_player_string(player)} adds to column {move}...")
             self.game.play_move(player, move)
@@ -147,13 +155,16 @@ class MLC4:
 
     ###########################################################################
 
+    def has_model(self):
+        return self.model is not None
+
     def load_existing_model(self, name, basepath="../data/models/"):
         try:
             self.model = load_model(f"{basepath}{name}", compile=True)
-            self.model.predict(np.zeros((1, self.input_size)))  # Init predictor
+            self.model.predict(np.zeros((1, *self.input_shape)))  # Init predictor
         except Exception as e:
             self.model = None
-            print(f"Could not load model!\n{e}")
+            print(style(f"Could not load model!\n{e}", Colours.FG.RED))
         else:
             self.model.summary()
 
@@ -174,7 +185,7 @@ class MLC4:
         self.model = keras.Sequential(name=name or None)
 
         # Input layer
-        self.model.add(Dense(self.input_size, input_dim=self.input_size))
+        self.model.add(Dense(self.input_shape[0], input_dim=self.input_shape[0]))
 
         # One or more large layers
         self.model.add(Dense(64, activation='relu'))
@@ -257,7 +268,7 @@ class MLC4:
             if save_plot_path: plt.savefig(save_plot_path)
             if show_plot: plt.show()
 
-        self.model.predict(np.zeros((1, self.input_size)))  # Init predictor
+        self.model.predict(np.zeros((1, *self.input_shape)))  # Init predictor
 
     def save_model(self, name="trained_1", basepath="../data/models/", save_structure=False):
         # if not name.endswith(".h5"):
@@ -282,9 +293,9 @@ class MLC4:
 
         print(self.print_player_string(player) + ": Testing cols: |", end="")
 
-        for i, move in enumerate(range(self.game.width)):
+        for move in range(self.game.width):
             if not self.game.is_legal_move(move):
-                print(style(f" {0.0:.2f} |", Colours.FG.BRIGHT_RED), end="")
+                print(style(f" {0.0:.3f} |", Colours.FG.BRIGHT_RED), end="")
                 continue
 
             test_game = Game(board=self.game.board.copy())
@@ -293,11 +304,11 @@ class MLC4:
             if check_early_win and test_game.status == player:
                 # Win reached
                 print(" win", end="")
-                max_probability = (i, 1.0)
+                max_probability = (move, 1.0)
                 break
 
             # Get prediction for move (make board positive by adding 1)
-            test_input = np.concatenate((test_game.board.flatten(), [player])).reshape((1, self.input_size)) + 1
+            test_input = np.concatenate((test_game.board.flatten(), [player])).reshape((1, *self.input_shape)) + 1
             prediction = self.model.predict(test_input)[0][player + 1]  # [[player_0_prob, draw (?), player_1_prob]]
 
             if np.isnan(prediction):
@@ -306,9 +317,9 @@ class MLC4:
             print(f" {prediction:.3f} |", end="")
 
             if prediction > max_probability[1]:
-                max_probability = (i, prediction)
+                max_probability = (move, prediction)
 
-        print(f"  => Predicted move at col {max_probability[0]} with {max_probability[1] * 100:.3f}%")
+        print(f"  => Predicted move at col {max_probability[0]} with {max_probability[1] * 100:.2f}%")
         return max_probability
 
     def predict(self, ai_player=-1, check_early_win=True, prevent_other_win=True):
@@ -329,7 +340,7 @@ class MLC4:
 class MLC4Normalised(MLC4):
     def __init__(self, board=None):
         super().__init__(board=board)
-        self.input_size = self.board_nodes
+        self.input_shape = (self.board_nodes,)
 
     def prepare_data(self, input_file, train_ratio=0.8):
         print("Preparing data...")
@@ -372,7 +383,7 @@ class MLC4Normalised(MLC4):
                 break
 
             # Get prediction for move
-            test_input = test_game.board.flatten().reshape((1, self.input_size)) * player + 1
+            test_input = test_game.board.flatten().reshape((1, *self.input_shape)) * player + 1
             prediction = self.model.predict(test_input)[0][player + 1]  # [[player_0_prob, draw (?), player_1_prob]]
 
             if np.isnan(prediction):
@@ -390,7 +401,43 @@ class MLC4Normalised(MLC4):
 class MLC4NormalisedConv(MLC4):
     def __init__(self, board=None):
         super().__init__(board=board)
-        self.input_size = self.board_nodes
+        self.input_shape = (self.game.height, self.game.width, 1)
+
+    def build_network(self, name="", learning_rate=0.001):
+        """
+        Input : self.width * self.height board (7 * 6 squares)
+        Output: 2 => [[player_0_prob, player_1_prob]]
+        """
+        print(f"Building model{(' ' + name) if name else ''}...")
+
+        self.model = keras.Sequential(name=name or None)
+
+        # Input layer
+        self.model.add(keras.layers.Conv2D(8, kernel_size=self.game.consecutive // 2, activation='relu',
+                                           input_shape=self.input_shape,
+                                           data_format="channels_last"))
+        # self.model.add(keras.layers.MaxPool2D(2, strides=1))
+
+        # One or more large layers
+        # self.model.add(keras.layers.Conv2D(64, kernel_size=self.game.consecutive // 2, activation='relu'))
+
+        self.model.add(keras.layers.Flatten())
+        # self.model.add(Dense(256, activation='relu'))
+        # self.model.add(Dense(256, activation='relu'))
+        # self.model.add(Dense(64, activation='relu'))
+
+        # Smaller ending layer
+        self.model.add(Dense(self.board_nodes, activation='relu'))
+
+        # Output end layer
+        self.model.add(Dense(3, activation='softmax'))
+
+        self.model.compile(loss=SparseCategoricalCrossentropy(),
+                           optimizer=Nadam(learning_rate=learning_rate),
+                           metrics=["accuracy"])
+
+        self.model.summary()
+
 
     def prepare_data(self, input_file, train_ratio=0.8):
         print("Preparing data...")
@@ -400,8 +447,11 @@ class MLC4NormalisedConv(MLC4):
         player = data[:, -1:]
 
         # Multiply winner and board with player to normalise player to player 1
-        Y = data[:, -2:-1] * player   # (winner), add 1 to make them positive
-        X = data[:, :-2] * player     # Drop last 2 cols, normalise and make positive, result = (board state)
+        Y = (data[:, -2:-1] * player + 1) / 2.0   # (winner), add 1 to make them positive
+        X = (data[:, :-2] * player + 1) / 2.0     # Drop last 2 cols, normalise and make positive, result = (board state)
+
+        # Reshape to create a matrix again
+        X = X.reshape((-1, *self.input_shape))
 
         size = int(train_ratio * X.shape[0])
 
@@ -433,7 +483,7 @@ class MLC4NormalisedConv(MLC4):
                 break
 
             # Get prediction for move
-            test_input = test_game.board.flatten().reshape((1, self.input_size)) * player + 1
+            test_input = (test_game.board.reshape((-1, *self.input_shape)) * player + 1) / 2.0
             prediction = self.model.predict(test_input)[0][player + 1]  # [[player_0_prob, draw (?), player_1_prob]]
 
             if np.isnan(prediction):
@@ -446,3 +496,32 @@ class MLC4NormalisedConv(MLC4):
 
         print(f"  => Predicted move at col {max_probability[0]} with {max_probability[1] * 100:.3f}%")
         return max_probability
+
+
+class MLC4Simplified(MLC4):
+    def __init__(self, board=None):
+        super().__init__(board=board)
+
+    def build_network(self, name="", learning_rate=0.001):
+        """
+        Input : self.width * self.height board (42 squares) + player
+        Output: 2 => [[player_0_prob, player_1_prob]]
+        """
+        print(f"Building model{(' ' + name) if name else ''}...")
+
+        self.model = keras.Sequential(name=name or None)
+
+        # Input layer
+        self.model.add(Dense(self.input_shape[0], input_dim=self.input_shape[0]))
+
+        # Larger hidden layer
+        self.model.add(Dense(self.board_nodes * 2, activation='relu'))
+
+        # Output end layer
+        self.model.add(Dense(3, activation='softmax'))
+
+        self.model.compile(loss=SparseCategoricalCrossentropy(),
+                           optimizer=Nadam(learning_rate=learning_rate),
+                           metrics=["accuracy"])
+
+        self.model.summary()

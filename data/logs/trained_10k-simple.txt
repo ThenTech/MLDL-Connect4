@@ -1,0 +1,25 @@
+Model: "test"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #
+=================================================================
+dense_1 (Dense)              (None, 43)                1892
+_________________________________________________________________
+dense_2 (Dense)              (None, 84)                3696
+_________________________________________________________________
+dense_3 (Dense)              (None, 3)                 255
+=================================================================
+Total params: 5,843
+Trainable params: 5,843
+Non-trainable params: 0
+_________________________________________________________________
+Using options: check_early_win, prevent_other_win
+Model ready. Press enter to start tests.
+Simulating games...: 100%|█████████████████| 1000/1000 [00:59<00:00, 16.76it/s]
+Accuracy vs random (x1000)     : 99.40% wins, 0.00% draws, 0.60% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [03:51<00:00,  4.32it/s]
+Accuracy vs smart (x1000, n=3) : 93.20% wins, 0.00% draws, 6.80% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [06:27<00:00,  2.58it/s]
+Accuracy vs smart (x1000, n=5) : 86.10% wins, 0.00% draws, 13.90% losses.
+Simulating games...: 100%|███████████████████| 100/100 [16:10<00:00,  9.70s/it]
+Accuracy vs smart (x100, n=100): 17.00% wins, 1.00% draws, 82.00% losses.
+Done. Press enter to play and display games.

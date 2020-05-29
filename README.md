@@ -49,7 +49,7 @@ The results:
 | Source training | Fitted accuracy | Test vs random | vs smart (n=3) |  (n=5)  | (n=100) |
 | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
 | 10k | 81.00/59.51% | 98.30% | 88.00% | 79.00% | 13.00% |
-| 10k-norm | 75.74/62.09% | 93.20% | 71.00% | 55.00% | 5.00% |
+| 10k-norm | 75.74/62.09% | 93,95% | 74,9‬0% | 61,2‬0% | 6.50% |
 | 50k | 74.98/62.66% | 99.50% | 96.50% | 90.40% | 18.00% |
 | 50k-norm | 71.48/64.51% | 95.40% | 79.30% | 66.10% | 8.00% |
 (**with** `check_early_win` and **with** `prevent_other_win`)
@@ -69,3 +69,16 @@ New models were trained using these datasets. The results using the random seed 
 (**with** `check_early_win` and **with** `prevent_other_win`)
 
 We can see the accuracy against its own training and test data is much higher than those from before, but the new 10k and 50k models do not perform any better than the previous ones. The 100k model does perform marginally better however. This is likely due to the fact that double the amount of data was used to train it.
+
+### Other networks
+
+We also tried to make a convolutional neural net with a `Conv2D` layer with a `4x4` kernel size and 32 filters and some hidden layers. We thought the network might be able to recognize the 4 on a row patterns better this way. We saw however that the effective accuracy, when trained with the 10k or 50k dataset and playing against the random player, was only about 60%, so much lower than any model used before. This is probably the case because convoluting over such a small "image" is not worth doing and loses a lot of precision about the state of each game square.
+
+We took the previous FCN and removed all layers except for the input and the output `softmax` layer. Instead we added just one hidden `Dense` layer with 84 nodes, and received the following results.
+
+|   Source training   | Fitted accuracy | Test vs random | vs smart (n=3) | (n=5)  | (n=100) |
+| :-----------------: | :-------------: | :------------: | :------------: | :----: | :-----: |
+| trained_10k-simple  |  68.31/61.33%   |     99.40%     |     93.20%     | 86.10% | 17.00%  |
+| trained_100k-simple |  69.65/74.04%   |     99.80%     |     98.50%     | 94.90% | 33.00%  |
+
+To our surprise this simple FCN actually performs better than the previously created one. We did not fully explore all possible network layouts from the beginning, but arbitrarily chose a combination of layers. If we had built the network from the ground up and tested its performance after every single addition and parameter tweak, we should have noticed this. 

@@ -39,3 +39,13 @@ Simulating games...: 100%|█████████████████| 1
 Accuracy vs smart (x1000, n=5) : 55.00% wins, 0.00% draws, 45.00% losses.
 Simulating games...: 100%|███████████████████| 100/100 [11:37<00:00,  6.98s/it]
 Accuracy vs smart (x100, n=100): 5.00% wins, 0.00% draws, 95.00% losses.
+___________
+Model ready. Press enter to start tests.
+Simulating games...: 100%|█████████████████| 1000/1000 [01:31<00:00, 10.89it/s]
+Accuracy vs random (x1000)     : 94.70% wins, 0.00% draws, 5.30% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [04:59<00:00,  3.34it/s]
+Accuracy vs smart (x1000, n=3) : 78.80% wins, 0.00% draws, 21.20% losses.
+Simulating games...: 100%|█████████████████| 1000/1000 [07:37<00:00,  2.19it/s]
+Accuracy vs smart (x1000, n=5) : 67.40% wins, 0.00% draws, 32.60% losses.
+Simulating games...: 100%|███████████████████| 100/100 [14:04<00:00,  8.44s/it]
+Accuracy vs smart (x100, n=100): 8.00% wins, 0.00% draws, 92.00% losses.
