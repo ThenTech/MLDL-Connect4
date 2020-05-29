@@ -154,26 +154,26 @@ if __name__ == "__main__":
             # This way the CPU is used to run the network, enabling multiprocessing.
 
             generate_dataset(game, output_file,
-                            total=50000, mode="w",
-                            n=10, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                             total=50000, mode="w",
+                             n=10, check_early_win=check_early_win, prevent_other_win=prevent_other_win)
             exit(0)
         else:
             # Test procedure to get accuracies by simulating games
             try:
                 result = test_accuracy(game, game.play_vs_random, 1000,
-                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                                       check_early_win=check_early_win, prevent_other_win=prevent_other_win)
                 print_accuracy("Accuracy vs random (x1000)     ", result=result)
 
                 result = test_accuracy(game, game.play_vs_smart, 1000, n=3,
-                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                                       check_early_win=check_early_win, prevent_other_win=prevent_other_win)
                 print_accuracy("Accuracy vs smart (x1000, n=3) ", result=result)
 
                 result = test_accuracy(game, game.play_vs_smart, 1000, n=5,
-                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                                       check_early_win=check_early_win, prevent_other_win=prevent_other_win)
                 print_accuracy("Accuracy vs smart (x1000, n=5) ", result=result)
 
                 result = test_accuracy(game, game.play_vs_smart, 100, n=100,
-                                    check_early_win=check_early_win, prevent_other_win=prevent_other_win)
+                                       check_early_win=check_early_win, prevent_other_win=prevent_other_win)
                 print_accuracy("Accuracy vs smart (x100, n=100)", result=result)
 
                 # result = test_accuracy(game, game.play_vs_ai, 1000,

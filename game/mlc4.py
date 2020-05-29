@@ -77,7 +77,11 @@ class MLC4:
         self.game = Game()
         self.states = []
 
-    def play_original(self, starting=None, legal_only=True, n=100):
+    def play_original_vs_random(self, starting=None, legal_only=True, n=100):
+        # Dummy call original play function
+        return self.game.random_play(starting, legal_only, self._add_state)
+
+    def play_original_vs_smart(self, starting=None, legal_only=True, n=100):
         # Dummy call original play function
         return self.game.smart_play(starting, legal_only, n, self._add_state)
 

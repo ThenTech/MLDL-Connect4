@@ -44,6 +44,7 @@ The results:
 | 10k-norm | 75.74/62.09% | 34.90% |     7.50%      | 2.50%  | 0.00% |
 | 50k |  74.98/62.66%   | 98.60% | 88.00% | 82.00% | 13.00% |
 | 50k-norm | 71.48/64.51% | 28.10% | 5.30% | 2.70% | 0.00% |
+
 (**with** `check_early_win` and **without** `prevent_other_win`)
 
 | Source training | Fitted accuracy | Test vs random | vs smart (n=3) |  (n=5)  | (n=100) |
@@ -52,6 +53,7 @@ The results:
 | 10k-norm | 75.74/62.09% | 93,95% | 74,9‬0% | 61,2‬0% | 6.50% |
 | 50k | 74.98/62.66% | 99.50% | 96.50% | 90.40% | 18.00% |
 | 50k-norm | 71.48/64.51% | 95.40% | 79.30% | 66.10% | 8.00% |
+
 (**with** `check_early_win` and **with** `prevent_other_win`)
 
 ### New data generation
