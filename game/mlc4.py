@@ -1,7 +1,7 @@
 from colours import Colours, style
 
-# seed = 1232611  # Student number Cedric
-seed = 0
+seed = 1232611  # Student number Cedric
+# seed = 0
 
 import random
 if seed: random.seed(seed)

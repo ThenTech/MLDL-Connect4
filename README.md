@@ -1,6 +1,13 @@
 # MLDL-Connect4
 2020-06-12 **Cedric Mingneau** (1232611), **William Thenaers** (1746077)
 
+#### File structure
+
+- [`data/logs`](data/logs): Contains test logs
+- [`data/models`](data/models): Contains exported pre-trained models and their training accuracy graph 
+- [`data`](data): Contains used datasets
+- [`game`](game): Contains the actual code
+
 ### Base model and tested accuracy
 
 ```python
